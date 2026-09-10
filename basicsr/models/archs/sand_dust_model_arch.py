@@ -1,8 +1,5 @@
-"""Sand-dust removal model based on the underwater dual-branch network.
-
-The luminance and sort/unsort images replace the SWT main/guide coefficients.
-Consequently, the two decoded branches are fused directly into an RGB residual
-instead of being passed to ISWT.
+"""
+    Sand-dust removal model based on the dual-branch network.
 """
 
 import math
@@ -364,7 +361,7 @@ class SelectiveFusion(nn.Module):
 
 
 ##########################################################################
-## Dual-Stream Block - Encoder (DSB_Encoder)
+## Dual-Stream Aggregation Block  - Encoder (DSAB)
 ##   Main branch (CNN):  MSCB (independent)
 ##   Guide branch:  AvgPool -> FFN (independent)
 ##   Fusion: SelectiveFusion (lightweight inter-branch exchange)
@@ -373,11 +370,11 @@ class DSB_Encoder(nn.Module):
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
         super(DSB_Encoder, self).__init__()
 
-        ## Main-frequency branch: CNN path
+        ## Main branch: CNN path
         self.norm_main = LayerNorm(dim, LayerNorm_type)
         self.mscb = MSCB(dim, bias)
 
-        ## Guide-frequency branch: pooling path
+        ## Guide branch: pooling path (Contextual Feature Extraction Block(CFEB)
         self.norm_guide1 = LayerNorm(dim, LayerNorm_type)
         self.attn = Attention(dim, num_heads, bias)
         self.norm_guide2 = LayerNorm(dim, LayerNorm_type)
@@ -390,7 +387,7 @@ class DSB_Encoder(nn.Module):
         ## Main branch: MSCB
         x_main = x_main + self.mscb(self.norm_main(x_main))
 
-        ## Guide branch: AvgPool -> FFN
+        ## Guide branch: AvgPool -> FFN (Contextual Feature Extraction Block(CFEB)
         x_guide = x_guide + self.attn(self.norm_guide1(x_guide))
         x_guide = x_guide + self.ffn_guide(self.norm_guide2(x_guide))
 
@@ -401,7 +398,7 @@ class DSB_Encoder(nn.Module):
 
 
 ##########################################################################
-## Dual-Stream Block - Decoder (DSB_Decoder)
+## Dual-Stream Recovery Block - Decoder (DSRB)
 ##   Roles swapped from encoder:
 ##   Guide branch (CNN):  MSCB (independent)
 ##   Main branch:    AvgPool -> FFN (independent)
@@ -411,11 +408,11 @@ class DSB_Decoder(nn.Module):
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
         super(DSB_Decoder, self).__init__()
 
-        ## Guide-frequency branch: CNN path (swapped)
+        ## Guide branch: CNN path (swapped)
         self.norm_guide = LayerNorm(dim, LayerNorm_type)
         self.mscb = MSCB(dim, bias)
 
-        ## Main-frequency branch: pooling path (swapped)
+        ## Main branch: pooling path (swapped) (Contextual Feature Extraction Block(CFEB)
         self.norm_main1 = LayerNorm(dim, LayerNorm_type)
         self.attn = Attention(dim, num_heads, bias)
         self.norm_main2 = LayerNorm(dim, LayerNorm_type)
@@ -428,7 +425,7 @@ class DSB_Decoder(nn.Module):
         ## Guide branch (CNN): MSCB
         x_guide = x_guide + self.mscb(self.norm_guide(x_guide))
 
-        ## Main branch: AvgPool -> FFN
+        ## Main branch: AvgPool -> FFN (Contextual Feature Extraction Block(CFEB)
         x_main = x_main + self.attn(self.norm_main1(x_main))
         x_main = x_main + self.ffn_main(self.norm_main2(x_main))
 
@@ -439,7 +436,7 @@ class DSB_Decoder(nn.Module):
 
 
 ##########################################################################
-## Latent Joint Spatial Attention Block
+## Joint Fusion Block
 ##   Concatenates main and guide branches along channel dimension
 ##   Applies full spatial self-attention on the joint representation
 ##   The attention naturally captures both intra-branch and inter-branch
@@ -708,7 +705,7 @@ class SandDustModel(nn.Module):
 
 
 if __name__ == '__main__':
-    model = swt_new9_model152(
+    model = SandDustModel(
         dim=16, num_blocks=(1, 1, 1, 1), heads=(1, 2, 4, 8))
     test_input = torch.randn(1, 3, 65, 67)
     test_output = model(test_input)
