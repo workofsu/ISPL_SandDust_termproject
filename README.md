@@ -1,15 +1,13 @@
-# sand_dust model
+# Sand Dust Image Restoration
 
-This repository contains a compact training, inference, and evaluation package
-for the `sand_dust model`, an underwater image-restoration network.
+This repository provides training, inference, and evaluation code for an
+underwater sand-dust image-restoration network.
 
 The project uses one configuration file:
 
 ```text
 options/sand_dust.yml
 ```
-
-Hydra is not required.
 
 ## Requirements
 
@@ -27,7 +25,7 @@ pip install -r requirements.txt
 ## Project layout
 
 ```text
-sand_dust termproject/
+ISPL_SandDust_termproject/
 |-- train.py
 |-- test.py
 |-- compute_metrics.py
@@ -42,9 +40,28 @@ sand_dust termproject/
 |       |-- input/
 |       `-- target/
 |-- experiments/
-|-- results/
-`-- pretrained/
+`-- results/
 ```
+
+## Dataset
+
+Download the training and test datasets from
+[SandDust_Data](https://drive.google.com/drive/folders/1KA9RoKzZY-JJQFwPijljhzne-4sDXbco?usp=drive_link).
+
+After downloading and extracting the dataset, arrange the files as follows:
+
+```text
+datasets/
+|-- train/
+|   |-- input/
+|   `-- target/
+`-- test/
+    |-- input/
+    `-- target/
+```
+
+The `input` directories contain degraded images, and the `target` directories
+contain their clean ground-truth images.
 
 ## Training data
 
@@ -87,7 +104,7 @@ and validation sections to obtain a deterministic, non-overlapping split.
 
 ## Train
 
-Run:
+Start training from the project root:
 
 ```bash
 python train.py
@@ -117,11 +134,14 @@ Place images to restore in:
 datasets/test/input
 ```
 
-The default configuration loads:
+The default configuration loads the following checkpoint:
 
 ```text
 experiments/sand_dust_model/models/net_g_best.pth
 ```
+
+Run training first to create this checkpoint, or place a compatible trained
+checkpoint at that path.
 
 Run:
 
@@ -170,8 +190,5 @@ RGB evaluation.
 ## Configuration
 
 All paths and training parameters are stored in `options/sand_dust.yml`.
-Relative paths are resolved from the project directory, so the package can be
-moved to another computer without modifying source code.
-
-The public model name is `sand_dust model`. Its Python/YAML identifier is
-`SandDustModel` because Python class names cannot contain spaces.
+Relative paths are resolved from the project directory, so the repository can
+be moved without modifying the source code.
