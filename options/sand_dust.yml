@@ -1,0 +1,189 @@
+# sand_dust model - training and testing configuration
+# Edit dataset paths and training values in this one file only.
+
+name: sand_dust_model
+model_type: ImageCleanModel
+scale: 1
+num_gpu: 1              # Use 0 for CPU (GPU is strongly recommended).
+manual_seed: 100
+
+datasets:
+  train:
+    name: SandDustTrain
+    type: Dataset_SandDustImage
+    dataroot_gt: ./datasets/train/target
+    dataroot_lq: ./datasets/train/input
+    gt_ext: .jpg
+    lq_ext: .JPG
+    filename_tmpl: '{}_{}'
+    colors:
+      - '#C89463'
+      - '#C6853D'
+      - '#C17137'
+      - '#BB9C87'
+      - '#B9A99C'
+      - '#B97455'
+      - '#B78E56'
+      - '#B56F4B'
+      - '#B37A43'
+      - '#B39163'
+      - '#A77135'
+      - '#A58961'
+      - '#A14A10'
+      - '#986339'
+      - '#977A38'
+      - '#8C6E38'
+      - '#84674C'
+      - '#826934'
+      - '#7D6E4A'
+      - '#7C766A'
+      - '#6F5633'
+    pairing_mode: all_colors
+    strict_pairing: true
+    resize_gt_to_lq: true
+    split: train
+    val_ratio: 0.1
+    split_seed: 1143
+    geometric_augs: true
+    io_backend:
+      type: disk
+    use_shuffle: true
+    num_worker_per_gpu: 4
+    batch_size_per_gpu: 4
+    mini_batch_sizes: [32]
+    iters: [300000]
+    gt_size: 128
+    gt_sizes: [128]
+    dataset_enlarge_ratio: 1
+    prefetch_mode: null
+
+  val_sand_dust:
+    name: SandDustVal
+    type: Dataset_SandDustImage
+    dataroot_gt: ./datasets/train/target
+    dataroot_lq: ./datasets/train/input
+    gt_ext: .jpg
+    lq_ext: .JPG
+    filename_tmpl: '{}_{}'
+    colors:
+      - '#C89463'
+      - '#C6853D'
+      - '#C17137'
+      - '#BB9C87'
+      - '#B9A99C'
+      - '#B97455'
+      - '#B78E56'
+      - '#B56F4B'
+      - '#B37A43'
+      - '#B39163'
+      - '#A77135'
+      - '#A58961'
+      - '#A14A10'
+      - '#986339'
+      - '#977A38'
+      - '#8C6E38'
+      - '#84674C'
+      - '#826934'
+      - '#7D6E4A'
+      - '#7C766A'
+      - '#6F5633'
+    pairing_mode: one_color_per_gt
+    max_samples: 100
+    strict_pairing: true
+    resize_gt_to_lq: true
+    split: val
+    val_ratio: 0.1
+    split_seed: 1143
+    io_backend:
+      type: disk
+
+  val_visual:
+    name: SandDustVisual
+    type: SingleImageDataset
+    dataroot_lq: ./datasets/test/input
+    visual_only: true
+    resize_long_side: 1024
+    resize_back: true
+    io_backend:
+      type: disk
+
+network_g:
+  type: SandDustModel
+  inp_channels: 3
+  out_channels: 3
+  dim: 48
+  num_blocks: [4, 6, 6, 3]
+  heads: [1, 2, 4, 8]
+  ffn_expansion_factor: 2.66
+  bias: false
+  LayerNorm_type: WithBias
+
+path:
+  pretrain_network_g: null
+  strict_load_g: true
+  resume_state: null
+
+test:
+  input_dir: ./datasets/test/input
+  ground_truth_dir: ./datasets/test/target
+  result_dir: ./results/sand_dust_model
+  checkpoint: ./experiments/sand_dust_model/models/net_g_best.pth
+  resize_long_side: 512
+  resize_back: true
+  test_y_channel: true
+
+train:
+  total_iter: 300000
+  warmup_iter: 3
+  use_grad_clip: true
+  scheduler:
+    type: CosineAnnealingRestartCyclicLR
+    periods: [92000, 208000]
+    restart_weights: [1, 1]
+    eta_mins: [0.0003, 0.000001]
+  mixing_augs:
+    mixup: false
+    mixup_beta: 1.2
+    use_identity: true
+  optim_g:
+    type: AdamW
+    lr: 0.0003
+    weight_decay: 0.0001
+    betas: [0.9, 0.999]
+  pixel_opt:
+    type: MSELoss
+    loss_weight: 1.0
+    reduction: mean
+  SSIM:
+    type: SSIMLoss
+    loss_weight: 0.2
+    reduction: mean
+  color_opt:
+    type: LabColorBalanceLoss
+    loss_weight: 0.05
+    mean_weight: 0.5
+    reduction: mean
+
+val:
+  window_size: 8
+  val_freq: 5000
+  save_img: true
+  rgb2bgr: true
+  use_image: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+
+logger:
+  print_freq: 5000
+  save_checkpoint_freq: 5000
+  use_tb_logger: true
+  wandb:
+    project: null
+    resume_id: null
+
+dist_params:
+  backend: nccl
+  port: 29500

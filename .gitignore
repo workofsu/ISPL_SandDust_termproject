@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+experiments/*
+!experiments/.gitkeep
+results/*
+!results/.gitkeep
+tb_logger/
+datasets/**/input/*
+datasets/**/target/*
+!datasets/**/input/.gitkeep
+!datasets/**/target/.gitkeep
+pretrained/*
+!pretrained/.gitkeep
