@@ -241,7 +241,7 @@ class MSCB(nn.Module):
 ##   Preserves spatial dimensions for the encoder/decoder residual paths
 ##########################################################################
 class Attention(nn.Module):
-    """Pooling-only replacement; constructor kept compatible with callers."""
+    """residual addition is handled by callers."""
 
     def __init__(self, dim, num_heads, bias):
         super(Attention, self).__init__()
@@ -249,7 +249,7 @@ class Attention(nn.Module):
             kernel_size=3, stride=1, padding=1, count_include_pad=False)
 
     def forward(self, x):
-        return self.pool(x)
+        return self.pool(x) - x
 
 
 ##########################################################################
